@@ -51,7 +51,7 @@ CRC16:
       END IF
     NEXT J2
     IF (#I AND $ff) = 0 THEN
-      PRINT AT XY(20,8), " "
+      PRINT AT XY(13,8), " "
       SELECT CASE ((#I / 256) AND $3)
         CASE 3
           PRINT "..."
@@ -109,11 +109,11 @@ main:
 
   PRINT AT XY(0,23), "COLECO BIOS ID (C) 2026 VISREALM"
 
-  PRINT AT XY(8,8), "READING BIOS"
+  PRINT AT XY(1,8), "READING BIOS"
   
   GOSUB CRC16
 
-  PRINT AT XY(8,8), "BIOS CRC16: ", #CRC
+  PRINT AT XY(1,8), "BIOS CRC16: ", #CRC
 
   PRINT AT XY(1,12), "ID: "
 
