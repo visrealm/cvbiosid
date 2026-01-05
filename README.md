@@ -2,22 +2,41 @@
 
 Identify the ColecoVision BIOS image installed in your machine.
 
-## Building (CMake)
+## Build Status
 
-Prerequisites: CMake 3.13+, Python 3, Git, and a C/C++ compiler. The build can auto-fetch and build the required CVBasic toolchain, or you can point it at existing installs.
+| Windows | Linux | macOS |
+|---------|-------|-------|
+| [![](https://github.com/visrealm/cvbiosid/actions/workflows/build-windows.yml/badge.svg)](https://github.com/visrealm/cvbiosid/actions/workflows/build-windows.yml) | [![](https://github.com/visrealm/cvbiosid/actions/workflows/build-linux.yml/badge.svg)](https://github.com/visrealm/cvbiosid/actions/workflows/build-linux.yml) | [![](https://github.com/visrealm/cvbiosid/actions/workflows/build-macos.yml/badge.svg)](https://github.com/visrealm/cvbiosid/actions/workflows/build-macos.yml) |
 
-Quick start:
+## Building
+
+### Prerequisites
+
+* CMake 3.13 or later
+* Python 3
+* Git
+* C/C++ compiler (MSVC, GCC, Clang, etc.)
+
+The build will auto-download and build the required tools from source when needed:
+* [CVBasic](https://github.com/visrealm/CVBasic) - compiler
+* [gasm80](https://github.com/visrealm/gasm80) - assembler
+* [Pletter](https://github.com/nanochess/Pletter) - compression
+
+### Quick Start
 
 ```bash
+git clone https://github.com/visrealm/cvbiosid.git
+cd cvbiosid
+
 mkdir build
 cd build
 cmake ..
-cmake --build . --target coleco   # or: cmake --build . --target all_platforms
+cmake --build .
 ```
 
-Build outputs land in `build/roms/`. Intermediate assembly lives in `build/asm/`.
+ROMs are written to `build/roms/`; intermediate assembly is in `build/asm/`.
 
-Options:
+### Build Options
 
 ```bash
 cmake .. -DBUILD_TOOLS_FROM_SOURCE=OFF          # use existing cvbasic/gasm80 if already on PATH
