@@ -9,15 +9,20 @@
 # https://github.com/visrealm/retropipe
 #
 
+import os
 import re
 import sys
 import subprocess
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-# Determine script directory and path to pletter.exe
+# Determine script directory and path to pletter.exe. Allow override via env PLETTER_EXE
 scriptDir = Path(__file__).parent.resolve()
-PLETTER_EXE = scriptDir / 'cvbasic' / 'pletter.exe'
+envPletter = os.environ.get("PLETTER_EXE")
+if envPletter:
+    PLETTER_EXE = Path(envPletter)
+else:
+    PLETTER_EXE = scriptDir / 'cvbasic' / 'pletter.exe'
 
 def extractLabelsAndData(basPath):
     """Parses a .bas file and extracts labeled DATA BYTE sequences."""

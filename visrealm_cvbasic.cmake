@@ -72,6 +72,7 @@ endfunction()
 #
 function(setup_cvbasic_tools)
     option(BUILD_TOOLS_FROM_SOURCE "Build CVBasic, gasm80 and XDT99 from source" ON)
+    option(ENABLE_XDT99 "Enable TI-99 toolchain (xdt99) support" OFF)
 
     # Tool version/tag configuration
     set(CVBASIC_GIT_TAG "master" CACHE STRING "CVBasic git tag/branch/commit")
@@ -105,9 +106,17 @@ function(setup_cvbasic_tools)
                 ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
                     ${CMAKE_COMMAND} --build build --config Release &&
                 ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
-                    ${CMAKE_COMMAND} --install build --config Release &&
-                ${CMAKE_COMMAND} -E copy_if_different <SOURCE_DIR>/linkticart.py ${CMAKE_BINARY_DIR}/external/CVBasic/
+                    ${CMAKE_COMMAND} --install build --config Release
         )
+
+        if(ENABLE_XDT99)
+            add_custom_command(TARGET CVBasic_external POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        ${CMAKE_BINARY_DIR}/CVBasic_external-prefix/src/CVBasic_external/linkticart.py
+                        ${CMAKE_BINARY_DIR}/external/CVBasic/
+                COMMENT "Copying linkticart.py"
+            )
+        endif()
 
         # Build gasm80 from visrealm fork using separate process to avoid cross-compilation issues
         ExternalProject_Add(gasm80_external
@@ -125,15 +134,17 @@ function(setup_cvbasic_tools)
                     ${CMAKE_COMMAND} --install build --config Release
         )
 
-        # Build XDT99 tools (Python-based)
-        ExternalProject_Add(XDT99_external
-            GIT_REPOSITORY https://github.com/endlos99/xdt99.git
-            GIT_TAG ${XDT99_GIT_TAG}
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND ""
-            INSTALL_COMMAND
-                ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> ${CMAKE_BINARY_DIR}/external/xdt99
-        )
+        if(ENABLE_XDT99)
+            # Build XDT99 tools (Python-based)
+            ExternalProject_Add(XDT99_external
+                GIT_REPOSITORY https://github.com/endlos99/xdt99.git
+                GIT_TAG ${XDT99_GIT_TAG}
+                CONFIGURE_COMMAND ""
+                BUILD_COMMAND ""
+                INSTALL_COMMAND
+                    ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> ${CMAKE_BINARY_DIR}/external/xdt99
+            )
+        endif()
 
         # Build Pletter compression tool (simple C file - create CMakeLists.txt on-the-fly)
         file(WRITE ${CMAKE_BINARY_DIR}/pletter_CMakeLists.txt
@@ -170,45 +181,68 @@ install(TARGETS pletter RUNTIME DESTINATION bin)
         # Set tool paths for external builds
         set(CVBASIC_EXE "${CMAKE_BINARY_DIR}/external/CVBasic/bin/cvbasic" PARENT_SCOPE)
         set(GASM80_EXE "${CMAKE_BINARY_DIR}/external/gasm80/bin/gasm80" PARENT_SCOPE)
-        set(XAS99_SCRIPT "${CMAKE_BINARY_DIR}/external/xdt99/xas99.py" PARENT_SCOPE)
-        set(LINKTICART_SCRIPT "${CMAKE_BINARY_DIR}/external/CVBasic/linkticart.py" PARENT_SCOPE)
+        if(ENABLE_XDT99)
+            set(XAS99_SCRIPT "${CMAKE_BINARY_DIR}/external/xdt99/xas99.py" PARENT_SCOPE)
+            set(LINKTICART_SCRIPT "${CMAKE_BINARY_DIR}/external/CVBasic/linkticart.py" PARENT_SCOPE)
+        else()
+            set(XAS99_SCRIPT "" PARENT_SCOPE)
+            set(LINKTICART_SCRIPT "" PARENT_SCOPE)
+        endif()
         set(PLETTER_EXE "${CMAKE_BINARY_DIR}/external/pletter/bin/pletter" PARENT_SCOPE)
 
         # Add dependencies to all CVBasic targets
-        set(TOOL_DEPENDENCIES CVBasic_external gasm80_external XDT99_external Pletter_external PARENT_SCOPE)
+        if(ENABLE_XDT99)
+            set(TOOL_DEPENDENCIES CVBasic_external gasm80_external XDT99_external Pletter_external PARENT_SCOPE)
+        else()
+            set(TOOL_DEPENDENCIES CVBasic_external gasm80_external Pletter_external PARENT_SCOPE)
+        endif()
 
         message(STATUS "CVBasic tools will be built from source")
         message(STATUS "CVBasic version/tag: ${CVBASIC_GIT_TAG}")
         message(STATUS "GASM80 version/tag: ${GASM80_GIT_TAG}")
-        message(STATUS "XDT99 version/tag: ${XDT99_GIT_TAG}")
+        if(ENABLE_XDT99)
+            message(STATUS "XDT99 version/tag: ${XDT99_GIT_TAG}")
+            message(STATUS "linkticart.py: ${LINKTICART_SCRIPT}")
+        else()
+            message(STATUS "XDT99 disabled; TI-99 builds skipped")
+        endif()
         message(STATUS "Pletter version/tag: ${PLETTER_GIT_TAG}")
     else()
         # Find required tools (original behavior)
         find_program(CVBASIC_EXE cvbasic PATHS ${CMAKE_SOURCE_DIR}/tools/cvbasic ${CMAKE_SOURCE_DIR}/../CVBasic/build/Release REQUIRED)
         find_program(GASM80_EXE gasm80 PATHS ${CMAKE_SOURCE_DIR}/tools/cvbasic ${CMAKE_SOURCE_DIR}/../gasm80/build/Release REQUIRED)
 
-        # Find linkticart.py in local CVBasic installation or fallback to bundled version
-        find_file(LINKTICART_SCRIPT linkticart.py
-            PATHS
-                ${CMAKE_SOURCE_DIR}/../CVBasic
-                ${CMAKE_SOURCE_DIR}/tools/cvbasic
-            DOC "CVBasic linkticart.py script"
-        )
-        if(NOT LINKTICART_SCRIPT)
-            set(LINKTICART_SCRIPT "${CMAKE_SOURCE_DIR}/tools/cvbasic/linkticart.py")
-        endif()
-
-        # Platform-specific tool paths
-        if(WIN32)
-            find_program(XAS99_SCRIPT xas99.py PATHS c:/tools/xdt99)
-            if(NOT XAS99_SCRIPT)
-                message(WARNING "XAS99 not found, TI-99 builds will be skipped")
+        if(ENABLE_XDT99)
+            # Find linkticart.py in local CVBasic installation or fallback to bundled version
+            find_file(LINKTICART_SCRIPT linkticart.py
+                PATHS
+                    ${CMAKE_SOURCE_DIR}/../CVBasic
+                    ${CMAKE_SOURCE_DIR}/tools/cvbasic
+                DOC "CVBasic linkticart.py script"
+            )
+            if(NOT LINKTICART_SCRIPT)
+                set(LINKTICART_SCRIPT "${CMAKE_SOURCE_DIR}/tools/cvbasic/linkticart.py")
             endif()
         else()
-            find_program(XAS99_SCRIPT xas99.py PATHS /usr/local/bin /opt/xdt99)
-            if(NOT XAS99_SCRIPT)
-                message(WARNING "XAS99 not found, TI-99 builds will be skipped")
+            set(LINKTICART_SCRIPT "")
+        endif()
+
+        if(ENABLE_XDT99)
+            # Platform-specific tool paths
+            if(WIN32)
+                find_program(XAS99_SCRIPT xas99.py PATHS c:/tools/xdt99)
+                if(NOT XAS99_SCRIPT)
+                    message(WARNING "XAS99 not found, TI-99 builds will be skipped")
+                endif()
+            else()
+                find_program(XAS99_SCRIPT xas99.py PATHS /usr/local/bin /opt/xdt99)
+                if(NOT XAS99_SCRIPT)
+                    message(WARNING "XAS99 not found, TI-99 builds will be skipped")
+                endif()
             endif()
+        else()
+            set(XAS99_SCRIPT "")
+            message(STATUS "XDT99 disabled; TI-99 builds skipped")
         endif()
 
         set(TOOL_DEPENDENCIES "" PARENT_SCOPE)
@@ -216,11 +250,11 @@ install(TARGETS pletter RUNTIME DESTINATION bin)
         message(STATUS "Using existing CVBasic tools")
         message(STATUS "CVBasic: ${CVBASIC_EXE}")
         message(STATUS "GASM80: ${GASM80_EXE}")
-        message(STATUS "linkticart.py: ${LINKTICART_SCRIPT}")
+        if(ENABLE_XDT99)
+            message(STATUS "linkticart.py: ${LINKTICART_SCRIPT}")
+        endif()
         if(XAS99_SCRIPT)
             message(STATUS "XAS99: ${XAS99_SCRIPT}")
-        else()
-            message(STATUS "XAS99: NOT FOUND (TI-99 builds will be limited)")
         endif()
     endif()
 endfunction()
@@ -228,7 +262,7 @@ endfunction()
 # Assemble TI-99 assembly file with XAS99 and link to cartridge format
 # Creates a custom command that assembles the .a99 file and links it to a .bin cartridge
 function(cvbasic_assemble_ti99 ASM_FILE ROM_OUTPUT CART_TITLE ASM_DIR ROMS_DIR TOOL_DEPS)
-    if(XAS99_SCRIPT)
+    if(XAS99_SCRIPT AND LINKTICART_SCRIPT)
         # XAS99 generates .bin file based on assembly filename
         get_filename_component(ASM_NAME "${ASM_FILE}" NAME_WE)
         add_custom_command(
@@ -247,7 +281,7 @@ function(cvbasic_assemble_ti99 ASM_FILE ROM_OUTPUT CART_TITLE ASM_DIR ROMS_DIR T
         # Create a dummy target when XAS99 is not available
         add_custom_command(
             OUTPUT "${ROMS_DIR}/${ROM_OUTPUT}"
-            COMMAND ${CMAKE_COMMAND} -E echo "XAS99 not available, skipping TI-99 build"
+            COMMAND ${CMAKE_COMMAND} -E echo "XAS99/linkticart not available, skipping TI-99 build"
             COMMAND ${CMAKE_COMMAND} -E touch "${ROMS_DIR}/${ROM_OUTPUT}"
             DEPENDS "${ASM_DIR}/${ASM_FILE}"
             COMMENT "Skipping TI-99 build (XAS99 not found)"
