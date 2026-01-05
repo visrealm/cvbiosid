@@ -2,7 +2,7 @@ setlocal
 @echo off
 
 echo ---------------------------
-echo CVBIOS build
+echo CVBIOSID build
 echo ---------------------------
 echo.
 
@@ -69,34 +69,6 @@ for %%f in (pletter\*.bas) do (
     python ..\tools\cvpletter.py "%%f"
 )
 
-echo ---------------------------------------------------------------------
-
-
-python3.13 c:\tools\xdt99\xas99.py -b -R ..\src\gpu.a99
-if %errorlevel% neq 0 (
-    exit /b %errorlevel%
-)
-
-python3.13 ..\tools\bin2cvb.py gpu.bin -o ..\src\gpu.bin.bas
-
-:: TI-99
-
-echo.
-echo ---------------------------------------------------------------------
-echo   Compiling for TI-99/4A
-echo ---------------------------------------------------------------------
-
-set BASENAME=CVBIOS_%VERSION%
-
-call cvbasic --ti994a cvbios.bas %ASMDIR%\%BASENAME%.a99 %LIBPATH%
-if %errorlevel% neq 0 exit /b %errorlevel%
-python3.13 c:\tools\xdt99\xas99.py -b -R %ASMDIR%\%BASENAME%.a99
-if %errorlevel% neq 0 exit /b %errorlevel%
-linkticart.py %BASENAME%.bin %BUILDDIR%\%BASENAME%_8.bin "CVBIOS"
-echo Output: build\%BASENAME%_8.bin
-
-DEL *.bin
-
 :: ColecoVision
 
 echo.
@@ -104,111 +76,13 @@ echo ---------------------------------------------------------------------
 echo   Compiling for Colecovision
 echo ---------------------------------------------------------------------
 
-set BASENAME=CVBIOS_%VERSION%_cv
+set BASENAME=CVBIOSID
 cvbasic cvbios.bas %ASMDIR%\%BASENAME%.asm %LIBPATH%
 if %errorlevel% neq 0 exit /b %errorlevel%
 gasm80 %ASMDIR%\%BASENAME%.asm -o %BUILDDIR%\%BASENAME%.rom
 copy /Y %BUILDDIR%\%BASENAME%.rom c:\tools\Classic99Phoenix
 echo.
 echo Output: build\%BASENAME%.rom
-
-
-:: MSX
-
-echo.
-echo ---------------------------------------------------------------------
-echo   Compiling for MSX
-echo ---------------------------------------------------------------------
-
-set BASENAME=CVBIOS_%VERSION%_msx_asc16
-cvbasic --msx cvbios.bas %ASMDIR%\%BASENAME%.asm %LIBPATH%
-if %errorlevel% neq 0 exit /b %errorlevel%
-gasm80 %ASMDIR%\%BASENAME%.asm -o %BUILDDIR%\%BASENAME%.rom
-echo Output: build\%BASENAME%.rom
-
-set BASENAME=CVBIOS_%VERSION%_msx_konami
-cvbasic --msx -konami cvbios.bas %ASMDIR%\%BASENAME%.asm %LIBPATH%
-if %errorlevel% neq 0 exit /b %errorlevel%
-gasm80 %ASMDIR%\%BASENAME%.asm -o %BUILDDIR%\%BASENAME%.rom
-echo Output: build\%BASENAME%.rom
-
-
-:: NABU
-
-echo.
-echo ---------------------------------------------------------------------
-echo   Compiling for NABU
-echo ---------------------------------------------------------------------
-
-set BASENAME=CVBIOS_%VERSION%
-cvbasic --nabu cvbios.bas %ASMDIR%\%BASENAME%_nabu.asm %LIBPATH%
-if %errorlevel% neq 0 exit /b %errorlevel%
-gasm80 %ASMDIR%\%BASENAME%_nabu.asm -o %BUILDDIR%\%BASENAME%.nabu
-echo Output: build\%BASENAME%.nabu
-
-echo.
-echo   Compiling for NABU (MAME)
-
-:: this is a different version as it is designed to allow running on a TMS99xxA
-:: so don't be tempted to copy the .nabu file from above
-set BASENAME=CVBIOS_%VERSION%_nabu_mame
-cvbasic --nabu -DTMS9918_TESTING=1 cvbios.bas %ASMDIR%\%BASENAME%.asm %LIBPATH%
-if %errorlevel% neq 0 exit /b %errorlevel%
-echo %CD%
-echo gasm80 %ASMDIR%\%BASENAME%.asm -o %ASMDIR%\000001.nabu
-gasm80 %ASMDIR%\%BASENAME%.asm -o %ASMDIR%\000001.nabu
-pushd %ASMDIR%
-tar.exe -a -c -f %BASENAME%.zip 000001.nabu
-copy /Y %BASENAME%.zip ..\%BUILDDIR%\%BASENAME%.npz
-del %BASENAME%.zip
-del 000001.nabu
-popd
-echo Output: build\%BASENAME%.npz
-
-
-:: SG-1000
-
-echo.
-echo ---------------------------------------------------------------------
-echo   Compiling for SG-1000/SC-3000
-echo ---------------------------------------------------------------------
-
-set BASENAME=CVBIOS_%VERSION%_sc3000
-cvbasic --sg1000 cvbios.bas %ASMDIR%\%BASENAME%.asm %LIBPATH%
-if %errorlevel% neq 0 exit /b %errorlevel%
-gasm80 %ASMDIR%\%BASENAME%.asm -o %BUILDDIR%\%BASENAME%.sg
-echo Output: build\%BASENAME%.sg
-
-
-:: CreatiVision
-
-echo.
-echo ---------------------------------------------------------------------
-echo   Compiling for CreatiVision
-echo ---------------------------------------------------------------------
-
-set BASENAME=CVBIOS_%VERSION%_crv
-cvbasic --creativision -rom16 cvbios.bas %ASMDIR%\%BASENAME%.asm %LIBPATH%
-if %errorlevel% neq 0 exit /b %errorlevel%
-gasm80 %ASMDIR%\%BASENAME%.asm -o %BUILDDIR%\%BASENAME%.bin
-echo Output: build\%BASENAME%.bin
-    
-
-:: HBC56
-
-::echo.
-::echo ---------------------------------------------------------------------
-::echo   Compiling for HBC-56
-::echo ---------------------------------------------------------------------
-
-::set BASENAME=CVBIOS_%VERSION%_hbc56
-::cvbasic --hbc56 cvbios.bas %ASMDIR%\%BASENAME%.asm %LIBPATH%
-::if %errorlevel% neq 0 exit /b %errorlevel%
-::gasm80 %ASMDIR%\%BASENAME%.asm -o %BUILDDIR%\%BASENAME%.bin
-::echo Output: build\%BASENAME%.bin
-
-echo.
-
 
 :: Just output our compiled ROM files
 :: This is very colvuluted way to format the output

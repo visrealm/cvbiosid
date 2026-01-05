@@ -1,13 +1,13 @@
 '
-' Project: moonpatrol
+' Project: CVBIOSID
 '
-' Moon Patrol clone for retro computers
+' Identify ColecoVision BIOS
 '
 ' Copyright (c) 2025 Troy Schrapel
 '
 ' This code is licensed under the MIT license
 '
-' https://github.com/visrealm/moonpatrol
+' https://github.com/visrealm/cvbiosid
 '
 
 ' ==========================================
@@ -22,7 +22,6 @@ CONST TRUE  = -1
 ' INCLUDES
 ' ------------------------------------------
 include "vdp-utils.bas"
-'include "input.bas"
 
 
 ' ==========================================
@@ -71,9 +70,10 @@ CRC16:
 ' ACTUAL ENTRY POINT
 ' ------------------------------------------
 main:
-  MODE 2  ' graphics I (can't really use a lot of it though)
+  MODE 2
 
   vdpR1Flags = $02
+  
     ' what are we working with?
   GOSUB vdpDetect
 
@@ -98,7 +98,6 @@ main:
     #addr = #addr + NAME_TABLE_WIDTH
   NEXT I
 
-  ' fill name table with spaces
   FILL_BUFFER($20)
   #addr = #VDP_NAME_TAB
   FOR I = 0 TO 23
@@ -112,15 +111,6 @@ main:
 
   PRINT AT XY(8,8), "READING BIOS"
   
-'part0.bin       | 0xd939 (55609)
-'part1.bin       | 0x1aa0 (6816)
-'part2.bin       | 0x8340 (33600)
-'part3.bin       | 0x1458 (5208)
-'part4.bin       | 0xa684 (42628)
-'part5.bin       | 0xa8d2 (43218)
-'part6.bin       | 0xd09f (53407)
-'part7.bin       | 0xf047 (61511)
-
   GOSUB CRC16
 
   PRINT AT XY(8,8), "BIOS CRC16: ", #CRC

@@ -1,5 +1,5 @@
 '
-' Project: retropipe
+' Project: CVBIOSID
 '
 ' Common (visrealm) VDP utilities
 '
@@ -7,7 +7,7 @@
 '
 ' This code is licensed under the MIT license
 '
-' https://github.com/visrealm/retropipe
+' https://github.com/visrealm/cvbiosid
 '
 
 ' VDP constants
