@@ -8,6 +8,23 @@ Identify the ColecoVision BIOS image installed in your machine.
 |---------|-------|-------|
 | [![](https://github.com/visrealm/cvbiosid/actions/workflows/build-windows.yml/badge.svg)](https://github.com/visrealm/cvbiosid/actions/workflows/build-windows.yml) | [![](https://github.com/visrealm/cvbiosid/actions/workflows/build-linux.yml/badge.svg)](https://github.com/visrealm/cvbiosid/actions/workflows/build-linux.yml) | [![](https://github.com/visrealm/cvbiosid/actions/workflows/build-macos.yml/badge.svg)](https://github.com/visrealm/cvbiosid/actions/workflows/build-macos.yml) |
 
+## What It Does
+
+On a real ColecoVision, ADAM (or compatible), the cart reads the first 8 KB of BIOS space and computes a CRC16 (poly $8005, init $FFFF). It prints the CRC and matches it against known variants. Unknown CRCs are still shown so you can compare manually.
+
+Identified BIOS CRCs:
+
+- NTSC – Factory: $D939
+- NTSC – Short Delay: $1AA0
+- NTSC – Button Skip: $8340
+- NTSC – No Delay: $1458
+- NTSC – Button Skip (alt font): $A684
+- NTSC – Button Skip (bold font): $A8D2
+- PAL – Factory: $D09F
+- PAL – Button Skip: $F047
+
+There’s also a matching Python helper in `tools/crc16.py` that uses the same CRC16 parameters, so you can verify dumps on your PC.
+
 ## Building
 
 ### Prerequisites
